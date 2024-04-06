@@ -13,7 +13,7 @@ The following packages are required to train this model
 ## Steps to trian the model
 1. Install the required python packages as metioned above. **Note**: Make sure the run environment has GPU with cuda toolkit
 2. Download the python modules (cnn.py, DataModule.py, PlotOutput.py, train_parta.py)
-3. Update the train and test data dir variables (trainDataDir, testDataDir) to appropriate paths in train_parta.py
+3. Update the train and test data dir variables (trainDataDir, testDataDir) to appropriate dataset paths in train_parta.py
 4. Following command line arguments are supported
 5. Execute train_parta.py file to train the model.
 6. Following command line arguments are supported for train_parta.py
