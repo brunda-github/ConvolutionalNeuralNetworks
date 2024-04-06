@@ -23,12 +23,11 @@ The following packages are required to train this model
 1. Install the required python packages as metioned above. **Note**: Make sure the run environment has GPU with cuda toolkit
 2. Download the python modules (cnn.py, DataModule.py, PlotOutput.py, train_parta.py)
 3. Update the train and test data dir variables (trainDataDir, testDataDir) to appropriate dataset paths in train_parta.py
-4. Following command line arguments are supported
-5. Run the command by replacing myname myprojectname respectively
+4. Run the command by replacing myname myprojectname respectively
 #### python train_parta.py --wandb_entity myname --wandb_project myprojectname
 Note: Make sure wandb project visibility is open. If not, make sure to call wandb.login() before initialising wandb runs
 
-6. Following command line arguments are supported for train_parta.py
+5. Following command line arguments are supported for train_parta.py
 This python file can be executed to train a FFN model by passing required arguments as mentioned below
 
 | Name                | Description                                                                           |
