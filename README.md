@@ -6,8 +6,6 @@ This repo contains 2 folders
 
 Below are the instructions to run/train the respective models
 
-# Training CNN from Scratch
-
 # Training CNN from scratch
 
 ## Requirements
