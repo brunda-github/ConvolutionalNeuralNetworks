@@ -39,7 +39,7 @@ This python file can be executed to train a FFN model by passing required argume
 | `b`, `batch_size`      | Batch size used for training the neural network                                      |
 | `bn`, `BatchNormalization` | Enable or disable batch normalization                                            |
 | `lr`, `learning_rate`  | Learning rate used for optimizing model parameters                                    |
-| `dp`, `dropout_prob`    Dropout probability in the fully connected layer                                        |
+| `dp`, `dropout_prob`   | Dropout probability in the fully connected layer                                        |
 |`nF`, `nFilters`        |Number of filters                                                                      |
 |`cf`,`convfiltersize`   | Size of convolutional layers filter                                                    |
 | `a`, `activation`      | Activation function used (`ReLU`, `Mish`, `PReLU`, `LeakyReLU`)                       |
