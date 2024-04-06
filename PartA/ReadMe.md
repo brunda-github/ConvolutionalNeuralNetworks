@@ -30,7 +30,7 @@ This python file can be executed to train a FFN model by passing required argume
 | `dp`, `dropout_prob`    Dropout probability in the fully connected layer                                        |
 |`nF`, `nFilters`        |Number of filters                                                                      |
 |`cf`,`convfiltersize`   | Size of convolutional layers filter                                                    |
-| `a`, `activation`      | Activation function used (`identity`, `sigmoid`, `tanh`, `ReLU`)                       |
+| `a`, `activation`      | Activation function used (`ReLU`, `Mish`, `PReLU`, `LeakyReLU`)                       |
 |`fs`,`filtersStrategy`| Strategy for calculating num of filters in next convolutional layer|
 
 
