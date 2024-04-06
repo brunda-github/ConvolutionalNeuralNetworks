@@ -10,7 +10,7 @@ The following packages are required to train this model
 
 **Note**: Install cuda supported torch and torch vision packages or use google colab which by default provides cuda support packages
 
-## Steps to trian the model
+## Steps to train the model
 1. Install the required python packages as metioned above. **Note**: Make sure the run environment has GPU with cuda toolkit
 2. Download the python modules (cnn.py, DataModule.py, PlotOutput.py, train_parta.py)
 3. Update the train and test data dir variables (trainDataDir, testDataDir) to appropriate dataset paths in train_parta.py
