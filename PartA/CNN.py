@@ -7,32 +7,40 @@ from statistics import mean
 import wandb
 
 class CNNModel(pl.LightningModule):
-    def __init__(self, inputsize = 256, nConvLayers = 5, convfiltersize = 3, nFilters = 32, filtersStrategy = "Same", activationfunction = "ReLU", enableBatchNormalisation = True, dropout_prob = 0.0, learningRate = 1e-3):
+    def __init__(self, inputsize = 256, nConvLayers = 5, convfiltersize = 3, nFilters = 32, filtersStrategy = "Double", activationfunction = "LeakyReLU", enableBatchNormalisation = True, dropout_prob = 0.2, learningRate = 1e-3):
+        #call Lightning module init method
         super(CNNModel, self).__init__()
 
         self.convfiltersize = convfiltersize
         self.activationfunction = activationfunction
         self.lr = learningRate
+        
+        #Using 2 as filter/kernel size, can be configured as required.
         poolingfiltersize = 2
 
         #Define model architecture
         layers = []
 
         in_channels = 3  # Initial input channels (RGB)
-        out_channels = []
+        out_channels = [] # Output no.of channels/ depth of a layer which will be used as input depth for next layer
 
+        #Calculate no.of output channels/depth of each layer
         for i in range(0, nConvLayers):
             out_channels.append(convfiltersize)
-            if(filtersStrategy == "Halve") and convfiltersize >= 2:
+          
+            if(filtersStrategy == "Halve") and convfiltersize >= 2: #Boundary condition check for 5 layes of CNN to make sure filter size doesnt shrink to zero
                 convfiltersize = convfiltersize // 2
-            elif filtersStrategy == "Double" and convfiltersize < 64 :
+            elif filtersStrategy == "Double" and convfiltersize < 64 : #Boundary condition check for 5 layers of CNN to make sure kernel size doesn't increase beyond the input size
                 convfiltersize *= 2
             #Do nothing if strategy is to use same number of filters
 
         self.inputsize = inputsize
         input_size = inputsize
+        
+        #finalconvLayeroutputsize holds the size of output of convolutional layers which will be used as input size for fully connected layers
         self.finalconvLayeroutputsize = inputsize
 
+        #Build the model
         for idx, channels in enumerate(out_channels):
             # 1. Convolution layer
             layers.append(nn.Conv2d(in_channels, channels, kernel_size=self.convfiltersize, padding=1))
@@ -69,10 +77,13 @@ class CNNModel(pl.LightningModule):
         # Define fully connected layers
         layers.append(nn.Linear(self.finalconvLayeroutputsize, 128))
         layers.append(nn.ReLU())
+        #dropout can be added in convolution layers also
+        #But added only in FClayer based on learnings from popular Imagenet models like Inception, Alexnet etc.
         if dropout_prob != 0.0:
                 layers.append(nn.Dropout(p = dropout_prob))
+                
         layers.append(nn.Linear(128, 10))  # Output layer with 10 classes (change as needed)
-        #layers.append(nn.Softmax(dim = 1))
+        
 
         # Convert the list of layers into a Sequential container
         self.model = nn.Sequential(*layers)
@@ -92,7 +103,10 @@ class CNNModel(pl.LightningModule):
         self.final_val_acc = []
         self.final_train_loss = []
         self.final_val_loss = []
+        
+        self.pred = []
 
+        #model to cuda to make sure GPU is utilized
         self.to('cuda')
 
     def forward(self, x):
@@ -100,39 +114,48 @@ class CNNModel(pl.LightningModule):
         return self.softmax(x)
 
     def training_step(self, batch, batch_idx):
-
+        #This method is automatically called by pytorch_lightning trainer while training the data
+        
         images, labels = batch
+        #data to cuda to make sure GPU is utilized
         images = images.to('cuda')
         labels = labels.to('cuda')
         outputs = self(images)
+        #Backpropogation is also done and the weights will get updated in the background
         loss = nn.functional.cross_entropy(outputs, labels)
 
         #Calculate accuracy
         _, pred = torch.max(outputs, 1)
         accuracy = (pred == labels).sum().item() / len(labels)
 
-        #self.log('train_accuracy', accuracy)
-        #self.log('train_loss', loss.item())
-
+        #Maintain a list of accuracies and loss for every batch which will be used to calculate the metrics for whole epoch.
         self.train_acc.append(accuracy)
         self.train_loss.append(loss.item())
 
         return loss
 
     def on_train_epoch_start(self):
+        #This method is automatically invoked while starting an epoch for train data
+        #Since the model is trained in batches and we log the metrics only at the end of epoch,
+        #On epoch start clear the lists used to append the metrics during training
         super().on_train_epoch_start()
         self.train_acc = []
         self.train_loss = []
         return
 
     def on_train_epoch_end(self):
+        #This method is automatically invoked while at the end of an epoch for train data
+        
         super().on_train_epoch_end()
+        
+        #Take the average of all metrics across batches and calculate the metrics for epoch
         total_acc = mean(self.train_acc)
         total_loss = mean(self.train_loss)
-        #total_loss = torch.mean(torch.stack(self.train_loss))
+        
         print("Train_Accuracy", total_acc)
         print("Train_Loss", total_loss)
 
+        #self.log automatically logs the metrics to wandb
         metrics = {'epoch':self.current_epoch, 'Train_Loss':total_loss, 'Train_Accuracy':total_acc}
         self.log_dict(metrics)
 
@@ -145,36 +168,50 @@ class CNNModel(pl.LightningModule):
         return
 
     def validation_step(self, batch, batch_idx):
+        #This method is automatically invoked by pytorch_lightning module for every epoch after training the data
         images, labels = batch
         images = images.to('cuda')
         labels = labels.to('cuda')
+        
         outputs = self(images)
+        
+        #In the valiadation_step, lightning module takes care of not updating the weights during loss computation.
         loss = nn.functional.cross_entropy(outputs, labels)
 
         #Calculate accuracy
         _, pred = torch.max(outputs, 1)
         accuracy = (pred == labels).sum().item() / len(labels)
 
+        #Maintain a list of accuracies and loss for every batch which will be used to calculate the metrics for whole epoch.
         self.val_acc.append(accuracy)
         self.val_loss.append(loss.item())
 
         return loss
 
     def on_validation_epoch_start(self):
+        #This method is automatically invoked while starting an epoch for validation data
+        #Since the model is validated in batches and we log the metrics only at the end of epoch,
+        #On epoch start clear the lists used to append the metrics.
         super().on_validation_epoch_start()
         self.val_acc = []
         self.val_loss = []
         return
 
     def on_validation_epoch_end(self):
+        #This method is automatically invoked while at the end of an epoch for validation data
         super().on_validation_epoch_end()
+        
+        #Take the average of all metrics across batches and calculate the metrics for epoch
         total_acc = mean(self.val_acc)
         total_loss = mean(self.val_loss)
-        #total_loss = torch.mean(torch.stack(self.val_loss))
+        
+        #Appending results of final epoch
         self.final_val_acc.append(total_acc)
         self.final_val_loss.append(total_loss)
+        
         print("val_Accuracy", total_acc)
         print("val_Loss", total_loss)
+        
         metrics = {'epoch':self.current_epoch, 'Val_Loss':total_loss, 'Val_Accuracy':total_acc}
         self.log_dict(metrics)
 
@@ -184,6 +221,7 @@ class CNNModel(pl.LightningModule):
         return
 
     def test_step(self, batch, batch_idx):
+        #This method is invoked by lightning module trainer during test
         images, labels = batch
         images = images.to('cuda')
         labels = labels.to('cuda')
@@ -193,12 +231,17 @@ class CNNModel(pl.LightningModule):
         #Calculate accuracy
         _, pred = torch.max(outputs, 1)
         accuracy = (pred == labels).sum().item() / len(labels)
-        self.pred = pred
-        #print("Accuracy", accuracy)
+        
+        #Since the data is passed in batches, Store the predictions for all the data
+        for i in pred.tolist():
+            self.pred.append(i)
+        
+
         self.log('Test_Accuracy', accuracy)
         self.log('Test_Loss', loss)
         return loss
 
     def configure_optimizers(self):
+        #This method is invoked by the lightning module to configure the optimizers during initial setup phase
         return torch.optim.Adam(self.parameters(), lr=0.001)
         #return torch.optim.SGD(self.parameters(), lr = 0.01)
