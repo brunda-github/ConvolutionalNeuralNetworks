@@ -18,6 +18,7 @@ The following packages are required to train this model
 5. Run the command by replacing myname myprojectname respectively
 #### python train_parta.py --wandb_entity myname --wandb_project myprojectname
 Note: Make sure wandb project visibility is open. If not, make sure to call wandb.login() before initialising wandb runs
+
 6. Following command line arguments are supported for train_parta.py
 This python file can be executed to train a FFN model by passing required arguments as mentioned below
 
