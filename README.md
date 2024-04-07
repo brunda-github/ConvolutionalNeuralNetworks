@@ -105,3 +105,8 @@ Contents:
 1. CustomDataModule.py - Used to load the data and return data loaders for lightning module to train
 2. CNN_Pretrained.py - Contains class to load a pretrained model InceptionV3 by default/resnet50 if wanted during initialization
 3. train_partb.py - creates a customdatamodule and uses it to finetune a pretrained model.
+
+--------------------------------------------------
+#Wandb report link
+
+https://wandb.ai/drbruap/CNN/reports/CS6910-Assignment-2--Vmlldzo3NDM2MTg2
